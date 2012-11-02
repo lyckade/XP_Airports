@@ -1,0 +1,2 @@
+updateUrl = "http://dev.x-plane.com/update/data/AptNav201208XP1000.zip";
+lastChange = "20120723";
