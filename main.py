@@ -60,19 +60,26 @@ def getNavAids(navDat,search,sindex,rowt=[]):
     @type navDat: array
     @param search: The search phrase
     @type search: string
-    @param sindex: 
-    @param rowt: 
+    @param sindex: search index
+    @param rowt: a list with rowtypes for the search
     
     """
     navAids = []
     
     for l in navDat:
+        # The loop through the whole navdata file
         navAid = l.strip().split()
         if len(navAid)<=10:
             navAid.append("")
+            
         if len(navAid)>8 and int(navAid[0]) in rowt and navAid[sindex].startswith(search):
-            #print "%s:%s:%s" % (navAid[0].strip(),len(navAid),navAid[7])
+            # Because of empty lines  or some lines with not relevant information just
+            # the relevant lines has to be parsed
+            # According to the navtype the data is stored in different spaces so the
+            # different tpyes of data needs to be parsed in different ways
+            # the epx[] has a homogen data structure for the output 
             if int(navAid[0]) in [2,3]:
+                # Navtype 2 and 3 (NDB and VOR)
                 exp = [
                    dic_rtype[navAid[0].strip()],
                    "%s.%s" % (navAid[4][:3],navAid[4][3:]),
@@ -81,7 +88,7 @@ def getNavAids(navDat,search,sindex,rowt=[]):
                    "",
                    navAid[8]]
             elif int(navAid[0]) in [4,5]:
-                
+                # Navtype 4 an 5 (ILS and LOC)
                 exp = [
                    dic_rtype[navAid[0].strip()],
                    "%s.%s" % (navAid[4][:3],navAid[4][3:]),
@@ -90,6 +97,7 @@ def getNavAids(navDat,search,sindex,rowt=[]):
                    navAid[9],
                    navAid[10]]
             elif int(navAid[0]) in [6]:
+                # Navtype 6 (GS / ILS)
                 exp = [
                    dic_rtype[navAid[0].strip()],
                    "%s.%s" % (navAid[4][:3],navAid[4][3:]),
@@ -98,6 +106,7 @@ def getNavAids(navDat,search,sindex,rowt=[]):
                    navAid[9],
                    navAid[10]]
             else:
+                # all the other (markers and DME)
                 exp = [
                    dic_rtype[navAid[0].strip()],
                    "%s.%s" % (navAid[4][:3],navAid[4][3:]),
@@ -122,6 +131,7 @@ def loadData(fileUrl):
     webFile = urllib.urlopen(fileUrl)
     meta = webFile.info()
     fileSize = int(meta.getheaders("Content-Length")[0])
+    # make smaller packages for the download
     mainApp.printUpdateStatus( "Download: %s (%s Bytes)" % (fileUrl.split("/")[-1],fileSize))
     dl = 0
     block = 8192
@@ -207,8 +217,14 @@ def updateData(event=""):
 #    print l
 
 class XpaGui:
+    """
+    The GUI of the programm
+    """
     import lib.multilb
     def __init__(self,parent):
+        """
+        Definition of the layout
+        """
         #--------------------------------------------------------- search fields
         self.inputArea = tk.Frame(parent,borderwidth=1)
         self.inputArea.pack(fill=tk.X,padx=10,pady=10)
@@ -244,6 +260,9 @@ class XpaGui:
         # Rowtypes to filter
         rowtypes = sup_rtype
         for k,v in dic_rtype.items():
+            """
+            The checkboxes of the filter are generated dynamicly
+            """
             if not int(k) in rowtypes:
                 continue
             self.cfilter[k] = {}
@@ -287,6 +306,11 @@ class XpaGui:
             
         
     def icaoSearch(self,event=0):
+        """
+        Method to search the navaids by using the ICAO code.
+        ICAO search just returns a result when the ICAO is
+        exactly 4 characters long.
+        """
         self.searchMode = "icao"
         icao = self.icaoField.get().upper()
         self.identField.delete(0, tk.END)
@@ -306,6 +330,9 @@ class XpaGui:
         
         
     def identSearch(self,event=0):
+        """ 
+        Method to search by using the ident of every navaid
+        """
         self.searchMode = "ident"
         ident = self.identField.get().upper()
         self.identField.delete(0, tk.END)
