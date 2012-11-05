@@ -11,11 +11,17 @@ import time
 import Tkinter as tk
 
 #-------------------------------------------------------------- global variables
+# gloabl var for the folder for the navdata
+# the same folder is also used for downloaded files
 g_dataFolder        = "data"
 
+# for the update a configuration file is needed
 g_confFile          = "%s/xp_airports.conf" % g_dataFolder
 
 #------------------------------------------------------------------ Navaid types
+"""
+dic_rtype: is used to translate the technical key of the navdata to text
+"""
 dic_rtype = {
             "2":"NDB",
             "3":"VOR",
@@ -27,17 +33,37 @@ dic_rtype = {
             "9":"IM",
             "12":"DME/ILS",
             "13":"DME"}
+
+"""
+sup_rtype: supported rtypes
+It is used to filter the updated navdata files. Unused entries are deleted
+after the download and extraction of the file
+"""
 sup_rtype = [2,3,4,5,6,12,13]
 
+
 #------------------------------------------------------------ load configuration
+"""
+The conf file is loaded and parsed by using the Conf Class
+"""
 conf = lib.conf.Conf()
 conf.addFile(g_confFile)
 conf.loadFiles()
 
-#--------------------------------------------------------- init of the variables
+# Global Variable for the update process
 xpa_update = conf.data["confvar"]["xpa_update"]
 
-def getNavAids(navDat,search,sindex,rowt=[]):
+def getNavAids(navDat,search,sindex,rowt=[]):    
+    """
+    Allows to search different navaids in the navigation data file. 
+    @param navDat: The content of the navigation data file
+    @type navDat: array
+    @param search: The search phrase
+    @type search: string
+    @param sindex: 
+    @param rowt: 
+    
+    """
     navAids = []
     
     for l in navDat:
@@ -85,6 +111,11 @@ def getNavAids(navDat,search,sindex,rowt=[]):
 
 #--------------------------------------------------------------- load file url
 def loadData(fileUrl):
+    """
+    Function loads a file by using the urllib
+    @param fileUrl: the URL to load the file
+    @return: the path to the downloaded file 
+    """
     import urllib
     # load the file with the url of the current apt.dat 
     pfname = "%s/%s" % (g_dataFolder,fileUrl.split("/")[-1])
@@ -133,7 +164,10 @@ def extractData(pfname,fileName,extractedRows):
     mainApp.printUpdateStatus( "Exctract %s ready" % fileName )
     
     
-def updateData(event):    
+def updateData(event=""):   
+    """
+    Function which updates the navigation data
+    """ 
     # Update xpa_update
     loc_xpa_file = loadData(xpa_update)
     mainApp.printUpdateStatus("Start with Update")
@@ -302,7 +336,7 @@ class XpaGui:
 
                 
 root = tk.Tk()
-root.title("Blu Airport Info")
+root.title("XP-Airports")
 root.minsize(400, 250)
 mainApp = XpaGui(root)
 root.mainloop()
