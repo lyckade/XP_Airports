@@ -153,9 +153,22 @@ def loadData(fileUrl):
 
 #--------------------------------------------------- extracts files from the zip
 def printUpdateStatus(t):
+    """
+    Function which gives the user the information about the update status.
+    @param t: Text with the information for the user
+    """
     mainApp.printUpdateStatus(t)
     
 def extractData(pfname,fileName,extractedRows):
+    """
+    Exctracts a navigation file from a zip archive
+    The zip is downloaded during the update and contains various files. This
+    function extracts one file and filters the relevant navaid types 
+    (extractedRows), because not all entries are relevant for this program.
+    @param pfname: path to the zip archive
+    @param fileName: the name of the file inside the zip archive
+    @param extractedRows: list which filters the rowtypes
+    """
     mainApp.printUpdateStatus( "Extract: %s" % fileName )
     
     xpaArchive = zipfile.ZipFile(pfname)
@@ -264,6 +277,7 @@ class XpaGui:
             The checkboxes of the filter are generated dynamicly
             """
             if not int(k) in rowtypes:
+                # Just allowed rowtypes if not in rowtypes skip entry
                 continue
             self.cfilter[k] = {}
             self.cfilter[k]["val"] = tk.IntVar()
@@ -297,6 +311,10 @@ class XpaGui:
         #self.messageArea.pack(side=tk.LEFT,padx=10,pady=10)
         
     def getRowtypes(self):
+        """
+        Gets all checked rowtypes of the GUI 
+        The list is returned an stored inside the rowtypes parameter.
+        """
         self.rowtypes = []
         for k,v in self.cfilter.items():
             rt = v["val"].get()
@@ -347,6 +365,9 @@ class XpaGui:
                 self.mlb.insert(tk.END,n)
                 
     def search(self,event=0):
+        """
+        The search method starts the search
+        """
         if self.searchMode == "ident":
             return self.identSearch(event)
         else:
@@ -354,6 +375,9 @@ class XpaGui:
         
                 
     def printUpdateStatus(self,t):
+        """
+        Gives a status text to the GUI
+        """
         #self.updateStatus.delete(0)
         self.updateStatus.insert(tk.END, t)
 
