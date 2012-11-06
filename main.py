@@ -132,7 +132,7 @@ def loadData(fileUrl):
     meta = webFile.info()
     fileSize = int(meta.getheaders("Content-Length")[0])
     # make smaller packages for the download
-    mainApp.printUpdateStatus( "Download: %s (%s Bytes)" % (fileUrl.split("/")[-1],fileSize))
+    printUpdateStatus( "Download: %s (%s Bytes)" % (fileUrl.split("/")[-1],fileSize))
     dl = 0
     block = 8192
     prozentLastOutput = 0
@@ -145,7 +145,7 @@ def loadData(fileUrl):
         dl = float(dl) + float(len(buffer))
         prozent = math.floor(dl*100. / fileSize)
         if (prozent - prozentLastOutput) >= 5:
-            mainApp.printUpdateStatus( "Status: %s Prozent" % prozent )
+            printUpdateStatus( "Status: %s Prozent" % prozent )
             prozentLastOutput = prozent
     webFile.close()
     localFile.close()
@@ -157,7 +157,8 @@ def printUpdateStatus(t):
     Function which gives the user the information about the update status.
     @param t: Text with the information for the user
     """
-    mainApp.printUpdateStatus(t)
+    #mainApp.printUpdateStatus(t)
+    print t
     
 def extractData(pfname,fileName,extractedRows):
     """
@@ -169,7 +170,7 @@ def extractData(pfname,fileName,extractedRows):
     @param fileName: the name of the file inside the zip archive
     @param extractedRows: list which filters the rowtypes
     """
-    mainApp.printUpdateStatus( "Extract: %s" % fileName )
+    printUpdateStatus( "Extract: %s" % fileName )
     
     xpaArchive = zipfile.ZipFile(pfname)
     # just the important rows
@@ -184,26 +185,33 @@ def extractData(pfname,fileName,extractedRows):
     targetObj.close()
     navDat.close()
     xpaArchive.close()
-    mainApp.printUpdateStatus( "Exctract %s ready" % fileName )
+    printUpdateStatus( "Exctract %s ready" % fileName )
     
     
-def updateData(event=""):   
+def updateData():   
     """
     Function which updates the navigation data
     """ 
-    # Update xpa_update
+    #---------------------------------------------- Load the xpa_update.txt file
+    printUpdateStatus("Loading configuration file")
     loc_xpa_file = loadData(xpa_update)
-    mainApp.printUpdateStatus("Start with Update")
+    printUpdateStatus("Configuration file loaded")
+    #mainApp.printUpdateStatus("Start with Update")
+    #--------------------------------------------------------- parse loaded file
     xpaconf = lib.conf.Conf()
     xpaconf.addFile(loc_xpa_file)
     xpaconf.loadFiles()
     
     xpa_updateUrl  = xpaconf.data["confvar"]["updateUrl"]
+    #---------------------------------------------------------- extract filename
     xpa_fname = xpa_updateUrl.split("/")[-1]
+    #------------------------------------------ path where file should be stored
     xpa_pfname = "%s/%s" % (g_dataFolder,xpa_fname)
-    
+    #------------------------------------- load the archive when it is not there
     if not os.path.exists(xpa_pfname):
+        printUpdateStatus("Update the navigation data")
         xpa_pfname = loadData(xpa_updateUrl)
+        #------------------ store information about the version in the conf file
         if not "AptNavVers" in conf.data["conflist"]:
             conf.data["conflist"]["AptNavVers"] = []
         if not xpa_pfname in conf.data["conflist"]["AptNavVers"]:
@@ -211,23 +219,13 @@ def updateData(event=""):
             conf.data["confvar"]["CurrentFile"] = xpa_pfname
             conf.data["confvar"]["lastUpdate"] = time.time()
             conf.writeConf(g_confFile)
+    #------------------------------------------------- extract the relevant data
     extractData(xpa_pfname,"earth_nav.dat",[2,3,4,5,6,12,13])
     extractData(xpa_pfname,"apt.dat",[1,16,17,100,101,102,50,51,52,53,54,55,56])    
 
 #-------------------------------------------------------------- Programmschritte
 
         
-#xpaArchive = zipfile.ZipFile(xpa_pfname)
-
-#navDat = xpaArchive.open("earth_nav.dat","r")
-#extractData(xpa_pfname,"earth_nav.dat",[2,3,4,5,6,12,13])
-#extractData(xpa_pfname,"apt.dat",[1,16,17,100,101,102,50,51,52,53,54,55,56])
-#navDat = open("%s/earth_nav.dat" % g_dataFolder,"r")
-#navAids = getNavAids(navDat,"EDDH",range(0,14))
-#navDat.close()
-
-#for l in navAids:
-#    print l
 
 class XpaGui:
     """
@@ -383,14 +381,25 @@ class XpaGui:
 
         
         
+#xpaArchive = zipfile.ZipFile(xpa_pfname)
 
+#navDat = xpaArchive.open("earth_nav.dat","r")
+#extractData(xpa_pfname,"earth_nav.dat",[2,3,4,5,6,12,13])
+#extractData(xpa_pfname,"apt.dat",[1,16,17,100,101,102,50,51,52,53,54,55,56])
+#navDat = open("%s/earth_nav.dat" % g_dataFolder,"r")
+#navAids = getNavAids(navDat,"EDDH",range(0,14))
+#navDat.close()
+
+
+
+updateData()
 
                 
-root = tk.Tk()
-root.title("XP-Airports")
-root.minsize(400, 250)
-mainApp = XpaGui(root)
-root.mainloop()
+#root = tk.Tk()
+#root.title("XP-Airports")
+#root.minsize(400, 250)
+#mainApp = XpaGui(root)
+#root.mainloop()
     
 
 
