@@ -11,11 +11,17 @@ import time
 import Tkinter as tk
 
 #-------------------------------------------------------------- global variables
+# gloabl var for the folder for the navdata
+# the same folder is also used for downloaded files
 g_dataFolder        = "data"
 
+# for the update a configuration file is needed
 g_confFile          = "%s/xp_airports.conf" % g_dataFolder
 
 #------------------------------------------------------------------ Navaid types
+"""
+dic_rtype: is used to translate the technical key of the navdata to text
+"""
 dic_rtype = {
             "2":"NDB",
             "3":"VOR",
@@ -27,26 +33,53 @@ dic_rtype = {
             "9":"IM",
             "12":"DME/ILS",
             "13":"DME"}
+
+"""
+sup_rtype: supported rtypes
+It is used to filter the updated navdata files. Unused entries are deleted
+after the download and extraction of the file
+"""
 sup_rtype = [2,3,4,5,6,12,13]
 
+
 #------------------------------------------------------------ load configuration
+"""
+The conf file is loaded and parsed by using the Conf Class
+"""
 conf = lib.conf.Conf()
 conf.addFile(g_confFile)
 conf.loadFiles()
 
-#--------------------------------------------------------- init of the variables
+# Global Variable for the update process
 xpa_update = conf.data["confvar"]["xpa_update"]
 
-def getNavAids(navDat,search,sindex,rowt=[]):
+def getNavAids(navDat,search,sindex,rowt=[]):    
+    """
+    Allows to search different navaids in the navigation data file. 
+    @param navDat: The content of the navigation data file
+    @type navDat: array
+    @param search: The search phrase
+    @type search: string
+    @param sindex: search index
+    @param rowt: a list with rowtypes for the search
+    
+    """
     navAids = []
     
     for l in navDat:
+        # The loop through the whole navdata file
         navAid = l.strip().split()
         if len(navAid)<=10:
             navAid.append("")
+            
         if len(navAid)>8 and int(navAid[0]) in rowt and navAid[sindex].startswith(search):
-            #print "%s:%s:%s" % (navAid[0].strip(),len(navAid),navAid[7])
+            # Because of empty lines  or some lines with not relevant information just
+            # the relevant lines has to be parsed
+            # According to the navtype the data is stored in different spaces so the
+            # different tpyes of data needs to be parsed in different ways
+            # the epx[] has a homogen data structure for the output 
             if int(navAid[0]) in [2,3]:
+                # Navtype 2 and 3 (NDB and VOR)
                 exp = [
                    dic_rtype[navAid[0].strip()],
                    "%s.%s" % (navAid[4][:3],navAid[4][3:]),
@@ -55,7 +88,7 @@ def getNavAids(navDat,search,sindex,rowt=[]):
                    "",
                    navAid[8]]
             elif int(navAid[0]) in [4,5]:
-                
+                # Navtype 4 an 5 (ILS and LOC)
                 exp = [
                    dic_rtype[navAid[0].strip()],
                    "%s.%s" % (navAid[4][:3],navAid[4][3:]),
@@ -64,6 +97,7 @@ def getNavAids(navDat,search,sindex,rowt=[]):
                    navAid[9],
                    navAid[10]]
             elif int(navAid[0]) in [6]:
+                # Navtype 6 (GS / ILS)
                 exp = [
                    dic_rtype[navAid[0].strip()],
                    "%s.%s" % (navAid[4][:3],navAid[4][3:]),
@@ -72,6 +106,7 @@ def getNavAids(navDat,search,sindex,rowt=[]):
                    navAid[9],
                    navAid[10]]
             else:
+                # all the other (markers and DME)
                 exp = [
                    dic_rtype[navAid[0].strip()],
                    "%s.%s" % (navAid[4][:3],navAid[4][3:]),
@@ -85,12 +120,18 @@ def getNavAids(navDat,search,sindex,rowt=[]):
 
 #--------------------------------------------------------------- load file url
 def loadData(fileUrl):
+    """
+    Function loads a file by using the urllib
+    @param fileUrl: the URL to load the file
+    @return: the path to the downloaded file 
+    """
     import urllib
     # load the file with the url of the current apt.dat 
     pfname = "%s/%s" % (g_dataFolder,fileUrl.split("/")[-1])
     webFile = urllib.urlopen(fileUrl)
     meta = webFile.info()
     fileSize = int(meta.getheaders("Content-Length")[0])
+    # make smaller packages for the download
     mainApp.printUpdateStatus( "Download: %s (%s Bytes)" % (fileUrl.split("/")[-1],fileSize))
     dl = 0
     block = 8192
@@ -112,9 +153,22 @@ def loadData(fileUrl):
 
 #--------------------------------------------------- extracts files from the zip
 def printUpdateStatus(t):
+    """
+    Function which gives the user the information about the update status.
+    @param t: Text with the information for the user
+    """
     mainApp.printUpdateStatus(t)
     
 def extractData(pfname,fileName,extractedRows):
+    """
+    Exctracts a navigation file from a zip archive
+    The zip is downloaded during the update and contains various files. This
+    function extracts one file and filters the relevant navaid types 
+    (extractedRows), because not all entries are relevant for this program.
+    @param pfname: path to the zip archive
+    @param fileName: the name of the file inside the zip archive
+    @param extractedRows: list which filters the rowtypes
+    """
     mainApp.printUpdateStatus( "Extract: %s" % fileName )
     
     xpaArchive = zipfile.ZipFile(pfname)
@@ -133,7 +187,10 @@ def extractData(pfname,fileName,extractedRows):
     mainApp.printUpdateStatus( "Exctract %s ready" % fileName )
     
     
-def updateData(event):    
+def updateData(event=""):   
+    """
+    Function which updates the navigation data
+    """ 
     # Update xpa_update
     loc_xpa_file = loadData(xpa_update)
     mainApp.printUpdateStatus("Start with Update")
@@ -173,8 +230,14 @@ def updateData(event):
 #    print l
 
 class XpaGui:
+    """
+    The GUI of the programm
+    """
     import lib.multilb
     def __init__(self,parent):
+        """
+        Definition of the layout
+        """
         #--------------------------------------------------------- search fields
         self.inputArea = tk.Frame(parent,borderwidth=1)
         self.inputArea.pack(fill=tk.X,padx=10,pady=10)
@@ -210,7 +273,11 @@ class XpaGui:
         # Rowtypes to filter
         rowtypes = sup_rtype
         for k,v in dic_rtype.items():
+            """
+            The checkboxes of the filter are generated dynamicly
+            """
             if not int(k) in rowtypes:
+                # Just allowed rowtypes if not in rowtypes skip entry
                 continue
             self.cfilter[k] = {}
             self.cfilter[k]["val"] = tk.IntVar()
@@ -244,6 +311,10 @@ class XpaGui:
         #self.messageArea.pack(side=tk.LEFT,padx=10,pady=10)
         
     def getRowtypes(self):
+        """
+        Gets all checked rowtypes of the GUI 
+        The list is returned an stored inside the rowtypes parameter.
+        """
         self.rowtypes = []
         for k,v in self.cfilter.items():
             rt = v["val"].get()
@@ -253,6 +324,11 @@ class XpaGui:
             
         
     def icaoSearch(self,event=0):
+        """
+        Method to search the navaids by using the ICAO code.
+        ICAO search just returns a result when the ICAO is
+        exactly 4 characters long.
+        """
         self.searchMode = "icao"
         icao = self.icaoField.get().upper()
         self.identField.delete(0, tk.END)
@@ -272,6 +348,9 @@ class XpaGui:
         
         
     def identSearch(self,event=0):
+        """ 
+        Method to search by using the ident of every navaid
+        """
         self.searchMode = "ident"
         ident = self.identField.get().upper()
         self.identField.delete(0, tk.END)
@@ -286,6 +365,9 @@ class XpaGui:
                 self.mlb.insert(tk.END,n)
                 
     def search(self,event=0):
+        """
+        The search method starts the search
+        """
         if self.searchMode == "ident":
             return self.identSearch(event)
         else:
@@ -293,6 +375,9 @@ class XpaGui:
         
                 
     def printUpdateStatus(self,t):
+        """
+        Gives a status text to the GUI
+        """
         #self.updateStatus.delete(0)
         self.updateStatus.insert(tk.END, t)
 
@@ -302,7 +387,7 @@ class XpaGui:
 
                 
 root = tk.Tk()
-root.title("Blu Airport Info")
+root.title("XP-Airports")
 root.minsize(400, 250)
 mainApp = XpaGui(root)
 root.mainloop()
