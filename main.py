@@ -297,12 +297,13 @@ class XpaGui:
         self.filterArea1.pack(fill=tk.X,pady=10)
 
         #self.table1 = TkScrollTabelle(self.outputArea1,16,8,80)
-#        self.buttomArea = tk.Frame(parent)
-#        self.buttomArea.pack(fill=tk.X)
+        self.buttomArea = tk.Frame(parent)
+        self.buttomArea.pack(fill=tk.X)
+        self.updateButton = tk.Button(self.buttomArea,text="Update NavData", command=updateData)
 #        self.updateButton = tk.Button(self.buttomArea,text="Update NavData")
-#        self.updateButton.grid(row=0,column=0)
-#        self.updateStatus = tk.Text(self.buttomArea,width=40,height=20)
-#        self.updateStatus.grid(row=0,column=1)
+        self.updateButton.grid(row=0,column=0)
+        self.updateStatus = tk.Text(self.buttomArea,width=40,height=20)
+        self.updateStatus.grid(row=0,column=1)
 #        self.updateButton.bind("<Button-1>", updateData)
         #self.messageArea = tk.Frame(parent,relief=tk.GROOVE,borderwidth=2)
         #tk.Label(self.messageArea,text="Status",height=10).pack(side=tk.LEFT)
@@ -392,14 +393,14 @@ class XpaGui:
 
 
 
-updateData()
+#updateData()
 
                 
-#root = tk.Tk()
-#root.title("XP-Airports")
-#root.minsize(400, 250)
-#mainApp = XpaGui(root)
-#root.mainloop()
+root = tk.Tk()
+root.title("XP-Airports")
+root.minsize(400, 250)
+mainApp = XpaGui(root)
+root.mainloop()
     
 
 
