@@ -157,7 +157,7 @@ def printUpdateStatus(t):
     Function which gives the user the information about the update status.
     @param t: Text with the information for the user
     """
-    #mainApp.printUpdateStatus(t)
+    mainApp.printUpdateStatus(t)
     print t
     
 def extractData(pfname,fileName,extractedRows):
@@ -377,7 +377,7 @@ class XpaGui:
         """
         Gives a status text to the GUI
         """
-        #self.updateStatus.delete(0)
+        self.updateStatus.delete(1.0, tk.END)
         self.updateStatus.insert(tk.END, t)
 
         
