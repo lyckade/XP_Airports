@@ -15,8 +15,10 @@ class Conf():
         self.files = []
         self.data = {}
         self.data['alias'] = {}
-        self.data['confvar'] = {}
-        self.data['conflist'] = {}
+
+        self.data['var'] = {}
+        self.data['list'] = {}
+        self.data['tuple'] = {}
 
         #Comment Charachter
         self.__commentCh = "#"
@@ -60,14 +62,23 @@ class Conf():
             elif cmd[0].strip().endswith("[]"):
                 # Behandeln von Listen
                 listname = cmd[0].strip()[:-2]
-                if not listname in self.data["conflist"]:
-                    self.data["conflist"][listname] = []
-                self.data["conflist"][listname].append(self.getString(cmd[1]))
-            else:
+                if not listname in self.data["list"]:
+                    self.data["list"][listname] = []
+                self.data["list"][listname].append(self.getString(cmd[1]))
+            elif cmd[0].strip().endswith("()"):
+                # Behandeln von Tupeln
+                tuplename = cmd[0].strip()[:-2]
+                self.data["tuple"][tuplename] = self.getTuple(cmd[1]) 
+            elif self.isString(cmd[1]):
                 # Zuweisung der Variablen
                 alkey = cmd[0].strip()
                 string = self.getString(cmd[1])
-                self.data['confvar'][alkey]=string
+                self.data['var'][alkey]=string
+            else:
+                # Zuweisung der Variablen
+                alkey = cmd[0].strip()
+                string = self.setType(cmd[1])
+                self.data['var'][alkey]=string
 
 
     def parseLine(self,l):
@@ -98,6 +109,14 @@ class Conf():
                 nconf.append(l)
         return nconf
 
+    def isTuple(self,s):
+        """Stell fest, ob es sich um ein Tupel handel"""
+        s = s.strip()
+        if s[0] == "(" and s[-1:]==")":
+            return True
+        else:
+            return False
+    
     def isString(self,s):
         """Stellt fest, ob es sich um ein String in Hochkomma handelt"""
         s = s.strip()
@@ -106,6 +125,14 @@ class Conf():
         else:
                 return False
                     
+    def getTuple(self,s):
+        s = s.strip()
+        seq = s[1:-1].split(",")
+        entries = []
+        for element in seq:
+            entries.append(self.setType(element))
+        return tuple(entries)
+    
     def getString(self,s):
         """Extracts the the string between the hochkommas
         or gets an Alias"""
@@ -116,7 +143,23 @@ class Conf():
                 if self.data['alias'].has_key(s):
                         return self.data['alias'][s]
                 else:
-                        self.e("No key %s found as alias in the conf file" % s)
+                        print "No key %s found as alias in the conf file" % s
+    def setType(self,s):
+        """ Gets an Inputstring and returns the value with the right datatype"""
+        s = s.strip()
+        if s.isdigit():
+            return int(s)
+        elif s.replace(".","").isdigit():
+            return float(s)
+        else:
+            return s
+    
+    def setWriteString(self,s):
+        """Gets the type and returns the string for the conf File
+        just used for writing data to a file"""
+        if isinstance(s,str):
+            s = "\"%s\"" % (s)
+        return str(s)
                         
     def writeConf(self,confFileName):
         """
@@ -125,11 +168,17 @@ class Conf():
         confFile = open(confFileName,"w")
         for key,val in self.data['alias'].iteritems():
             confFile.write("alias %s = \"%s\";\n" % (key,val))
-        for key,val in self.data['confvar'].iteritems():
-            confFile.write("%s = \"%s\";\n" % (key,val))
-        for key,conflist in self.data['conflist'].iteritems():
+        for key,val in self.data['var'].iteritems():
+            confFile.write("%s = %s;\n" % (key,self.setWriteString(val)))
+        for key,conflist in self.data['list'].iteritems():
             if len(conflist)>0:
                 for val in conflist:
-                    confFile.write("%s[] = \"%s\";\n" % (key,val))
+                    confFile.write("%s[] = %s;\n" % (key,self.setWriteString(val)))
+        for key,tuple in self.data['tuple'].iteritems():
+            if len(tuple)>0:
+                writeStr = "%s() = (" % (key)
+                for val in tuple:
+                    writeStr = "%s%s," % (writeStr,self.setWriteString(val))
+                confFile.write("%s);\n" % (writeStr[:-1]))
         confFile.close()
             

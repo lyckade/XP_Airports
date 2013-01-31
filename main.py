@@ -51,7 +51,7 @@ conf.addFile(g_confFile)
 conf.loadFiles()
 
 # Global Variable for the update process
-xpa_update = conf.data["confvar"]["xpa_update"]
+xpa_update = conf.data["var"]["xpa_update"]
 
 def getNavAids(navDat,search,sindex,rowt=[]):    
     """
